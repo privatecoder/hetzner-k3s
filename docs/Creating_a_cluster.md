@@ -59,6 +59,8 @@ networking:
     #     port: 60000-60100
     #     destination_ips:
     #       - 203.0.113.0/24
+  # node_port_firewall_enabled: true # optional: set false to disable NodePort firewall rules (TCP/UDP)
+  # node_port_range: "30000-32767" # optional: NodePort range to open on firewalls (TCP/UDP)
   public_network:
     ipv4: true
     ipv6: true

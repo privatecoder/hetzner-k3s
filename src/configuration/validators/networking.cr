@@ -7,6 +7,7 @@ require "../models/networking_config/public_network"
 require "../models/networking_config/ssh"
 require "./networking_config/cni"
 require "./networking_config/allowed_networks"
+require "./networking_config/node_port_range"
 require "./networking_config/private_network"
 require "./networking_config/public_network"
 require "./networking_config/ssh"
@@ -29,6 +30,7 @@ class Configuration::Validators::Networking
       networking.allowed_networks,
       skip_current_ip_validation: skip_current_ip_validation
     ).validate
+    Configuration::Validators::NetworkingConfig::NodePortRange.new(errors, networking.node_port_range).validate
     Configuration::Validators::NetworkingConfig::PrivateNetwork.new(errors, private_network, hetzner_client).validate
     Configuration::Validators::NetworkingConfig::PublicNetwork.new(errors, networking.public_network, settings).validate
     Configuration::Validators::NetworkingConfig::SSH.new(errors, networking.ssh, hetzner_client, settings.cluster_name).validate
