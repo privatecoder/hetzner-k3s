@@ -9,7 +9,6 @@ class Hetzner::Instance::CloudInitGenerator
   FIREWALL_SERVICE = {{ read_file("#{__DIR__}/../../../templates/firewall/firewall.service") }}
   FIREWALL_STATUS  = {{ read_file("#{__DIR__}/../../../templates/firewall/firewall_status.sh") }}
 
-  SSH_LISTEN_CONF          = {{ read_file("#{__DIR__}/../../../templates/ssh/listen.conf") }}
   SSH_CONFIGURATION_SCRIPT = {{ read_file("#{__DIR__}/../../../templates/ssh/configure_ssh.sh") }}
 
   def initialize(
@@ -108,25 +107,16 @@ class Hetzner::Instance::CloudInitGenerator
     YAML
   end
 
-  private def ssh_listen_conf
-    conf = Crinja.render(SSH_LISTEN_CONF, {
-      ssh_port: @settings.networking.ssh.port,
-    })
-    format_file_content(conf)
-  end
-
   private def ssh_configuration_script
     script = Crinja.render(SSH_CONFIGURATION_SCRIPT, {
       ssh_port: @settings.networking.ssh.port,
+      ipv6_enabled: @settings.networking.public_network.ipv6,
     })
     format_file_content(script)
   end
 
   private def ssh_files
     <<-YAML
-    - content: #{ssh_listen_conf}
-      path: /etc/systemd/system/ssh.socket.d/listen.conf
-      encoding: gzip+base64
     - content: #{ssh_configuration_script}
       permissions: '0755'
       path: /etc/configure_ssh.sh
