@@ -164,12 +164,23 @@ class Hetzner::Instance::Create
     settings.networking.private_network.enabled
   end
 
+  private def private_network_subnet
+    settings.networking.private_network.subnet
+  end
+
+  private def attach_private_network_after_create?
+    private_network_enabled? && (enable_public_net_ipv4 || enable_public_net_ipv6)
+  end
+
   private def needs_powering_on?(instance)
     instance.status != "running" && private_network_enabled?
   end
 
   private def needs_attaching_to_private_network?(instance)
-    private_network_enabled? && !instance.try(&.private_ip_address)
+    return false unless private_network_enabled?
+
+    private_net = instance.try(&.private_net)
+    private_net.nil? || private_net.empty?
   end
 
   private def power_on_instance(instance)
@@ -185,7 +196,14 @@ class Hetzner::Instance::Create
 
     mutex.synchronize do
       log_line "Attaching instance to network (attempt #{attaching_to_network_count})"
-      hetzner_client.post("/servers/#{instance.id}/actions/attach_to_network", {:network => network.not_nil!.id})
+      payload = {
+        :network => network.not_nil!.id,
+      } of Symbol => String | Int64
+
+      subnet = private_network_subnet
+      payload[:ip_range] = subnet unless subnet.empty?
+
+      hetzner_client.post("/servers/#{instance.id}/actions/attach_to_network", payload)
       log_line "Waiting for instance to be attached to the network..."
     end
   end
@@ -214,8 +232,9 @@ class Hetzner::Instance::Create
     }
 
     network = @network
-
-    base_config = base_config.merge({:networks => [network.id]}) unless network.nil?
+    if network && !attach_private_network_after_create?
+      base_config = base_config.merge({:networks => [network.id]})
+    end
 
     base_config
   end

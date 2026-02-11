@@ -38,6 +38,7 @@ networking:
   private_network:
     enabled: true
     subnet: 10.0.0.0/16
+    # If you use an existing network with multiple subnets, set `subnet` to the one you want.
   cni:
     enabled: true
     encryption: false

@@ -52,6 +52,8 @@ Replace `10.0.0.0/16` with your actual subnet if it's different. Also, make sure
     existing_network_name: "<name of your private network>"
 ```
 
+Note: with the public network disabled, hetzner-k3s must attach the private network at server creation time. If the existing network has multiple subnets, Hetzner will pick the subnet during creation, so ensure the network only has the subnet you intend to use.
+
 Also configure the allowed networks:
 
 ```yaml

@@ -68,6 +68,9 @@ networking:
     enabled: true
     subnet: 10.0.0.0/16
     existing_network_name: ""
+
+  # When using an existing network with multiple subnets, set `subnet` to the desired subnet.
+  # hetzner-k3s will attach servers to that subnet when the public network is enabled.
   cni:
     enabled: true
     encryption: false
@@ -133,6 +136,7 @@ worker_node_pools:
     enabled: true
     min_instances: 0
     max_instances: 3
+    # subnet_ip_range: 10.224.1.0/24 # optional: override subnet for this autoscaled pool
 
 # addons:
 #   csi_driver:
@@ -147,7 +151,7 @@ worker_node_pools:
 #   cluster_autoscaler:
 #     enabled: true # Cluster Autoscaler addon (default true). Set to false to omit autoscaling.
 #     manifest_url: "https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/hetzner/examples/cluster-autoscaler-run-on-master.yaml"
-#     container_image_tag: "v1.34.2"
+#     container_image_tag: "v1.35.0"
 #     scan_interval: "10s"                        # How often cluster is reevaluated for scale up or down
 #     scale_down_delay_after_add: "10m"           # How long after scale up that scale down evaluation resumes
 #     scale_down_delay_after_delete: "10s"        # How long after node deletion that scale down evaluation resumes
@@ -298,6 +302,8 @@ The networks you choose should have enough space for your expected number of pod
 
 The cluster autoscaler automatically manages the number of worker nodes in your cluster based on resource demands. When you enable autoscaling for a worker node pool, you can also configure various timing parameters to fine-tune its behavior.
 
+If you use private networks with multiple subnets, autoscaled nodes will use `networking.private_network.subnet` by default. You can override the subnet per autoscaled pool with `autoscaling.subnet_ip_range`.
+
 #### Basic Autoscaling Configuration
 
 ```yaml
@@ -309,6 +315,7 @@ worker_node_pools:
     enabled: true
     min_instances: 1
     max_instances: 10
+    # subnet_ip_range: 10.224.1.0/24 # optional
 ```
 
 #### Advanced Timing Configuration
