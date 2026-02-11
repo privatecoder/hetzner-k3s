@@ -66,6 +66,10 @@ networking:
     enabled: true
     subnet: 10.0.0.0/16
     existing_network_name: ""
+  # k8s_resolv_conf_nameservers:
+  #   - 185.12.64.1
+  #   - 185.12.64.2
+  #   # Max two entries are used by k3s; additional entries are ignored.
   cni:
     enabled: true
     encryption: false
@@ -371,4 +375,3 @@ The `create` command can be run multiple times with the same configuration witho
 eval "$(ssh-agent -s)"
 ssh-add --apple-use-keychain ~/.ssh/<private key>
 ```
-
