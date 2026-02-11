@@ -20,6 +20,7 @@ module Configuration
       getter cluster_cidr : String = "10.244.0.0/16"
       getter service_cidr : String = "10.43.0.0/16"
       getter cluster_dns : String = "10.43.0.10"
+      getter k8s_resolv_conf_nameservers : Array(String) = ["185.12.64.1", "185.12.64.2"]
 
       def node_port_range_iptables : String
         node_port_range.includes?("-") ? node_port_range.gsub("-", ":") : node_port_range

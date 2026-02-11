@@ -185,7 +185,7 @@ class Hetzner::Instance::CloudInitGenerator
       "hostnamectl set-hostname $(curl http://169.254.169.254/hetzner/v1/metadata/hostname)",
       "update-crypto-policies --set DEFAULT:SHA1 || true",
       "/etc/configure_ssh.sh",
-      "echo \"nameserver 8.8.8.8\" > /etc/k8s-resolv.conf",
+      k8s_resolv_conf_command,
     ]
 
     if !@settings.networking.private_network.enabled && @settings.networking.public_network.use_local_firewall
@@ -194,6 +194,14 @@ class Hetzner::Instance::CloudInitGenerator
     end
 
     commands
+  end
+
+  private def k8s_resolv_conf_command
+    nameservers = @settings.networking.k8s_resolv_conf_nameservers
+    nameservers = ["8.8.8.8"] if nameservers.empty?
+    nameservers = nameservers.first(2)
+    content = nameservers.map { |ns| "nameserver #{ns}" }.join("\\n") + "\\n"
+    "printf '#{content}' > /etc/k8s-resolv.conf"
   end
 
   private def generate_post_create_commands_str

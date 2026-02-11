@@ -70,6 +70,10 @@ networking:
     enabled: true
     subnet: 10.0.0.0/16
     existing_network_name: ""
+  # k8s_resolv_conf_nameservers:
+  #   - 185.12.64.1
+  #   - 185.12.64.2
+  #   # Max two entries are used by k3s; additional entries are ignored.
 
   # When using an existing network with multiple subnets, set `subnet` to the desired subnet.
   # hetzner-k3s will attach servers to that subnet when the public network is enabled.
