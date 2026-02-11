@@ -179,13 +179,18 @@ class Kubernetes::Software::ClusterAutoscaler
     image = settings.autoscaling_image || settings.image
     node_configs = build_node_configs
 
-    config = {
-      "imagesForArch" => {
-        "arm64" => image,
-        "amd64" => image,
-      },
-      "nodeConfigs" => node_configs,
+    config = {} of String => JSON::Any
+    images = {
+      "arm64" => image,
+      "amd64" => image,
     }
+    config["imagesForArch"] = JSON.parse(images.to_json)
+    config["nodeConfigs"] = JSON.parse(node_configs.to_json)
+
+    if settings.networking.private_network.enabled
+      subnet = settings.networking.private_network.subnet
+      config["defaultSubnetIPRange"] = JSON::Any.new(subnet) unless subnet.empty?
+    end
 
     config.to_json
   end
@@ -208,11 +213,17 @@ class Kubernetes::Software::ClusterAutoscaler
     json_labels = JSON.parse(labels.to_json)
     json_taints = JSON.parse(taints.to_json)
 
-    {
-      "cloudInit" => JSON::Any.new(cloud_init(pool)),
-      "labels"    => json_labels,
-      "taints"    => json_taints,
-    }
+    node_config = {} of String => JSON::Any
+    node_config["cloudInit"] = JSON::Any.new(cloud_init(pool))
+    node_config["labels"] = json_labels
+    node_config["taints"] = json_taints
+
+    if settings.networking.private_network.enabled
+      subnet = pool.autoscaling.try(&.subnet_ip_range)
+      node_config["subnetIPRange"] = JSON::Any.new(subnet) unless subnet.nil? || subnet.empty?
+    end
+
+    node_config
   end
 
   private def extract_labels(pool : Configuration::Models::WorkerNodePool) : Hash(String, String)

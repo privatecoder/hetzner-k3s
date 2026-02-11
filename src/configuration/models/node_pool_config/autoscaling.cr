@@ -6,4 +6,5 @@ class Configuration::Models::NodePoolConfig::Autoscaling
   property enabled : Bool = false
   property min_instances : Int32 = 0
   property max_instances : Int32 = 0
+  property subnet_ip_range : String = ""
 end
