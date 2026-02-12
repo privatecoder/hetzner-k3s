@@ -145,6 +145,7 @@ worker_node_pools:
 #   cluster_autoscaler:
 #     enabled: true # Cluster Autoscaler addon (default true). Set to false to omit autoscaling.
 #     manifest_url: "https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/hetzner/examples/cluster-autoscaler-run-on-master.yaml"
+#     manifest_file: "~/sample.yaml" # optional: local file path (preferred over manifest_url if set)
 #     container_image_tag: "v1.34.2"
 #     scan_interval: "10s"                        # How often cluster is reevaluated for scale up or down
 #     scale_down_delay_after_add: "10m"           # How long after scale up that scale down evaluation resumes
@@ -320,6 +321,7 @@ cluster_autoscaler:
   scale_down_delay_after_delete: "10s"     # How long after node deletion that scale down evaluation resumes
   scale_down_delay_after_failure: "15m"    # How long after scale down failure that scale down evaluation resumes
   max_node_provision_time: "15m"           # Maximum time CA waits for node to be provisioned
+  # manifest_file: "~/sample.yaml"         # Optional local file. If set, it is preferred over manifest_url.
 
 worker_node_pools:
 - name: autoscaled-pool
@@ -371,4 +373,3 @@ The `create` command can be run multiple times with the same configuration witho
 eval "$(ssh-agent -s)"
 ssh-add --apple-use-keychain ~/.ssh/<private key>
 ```
-

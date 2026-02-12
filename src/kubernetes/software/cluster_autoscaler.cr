@@ -309,8 +309,18 @@ class Kubernetes::Software::ClusterAutoscaler
   end
 
   private def manifest : String
-    manifest_url = settings.addons.cluster_autoscaler.manifest_url
-    raw_manifest = fetch_manifest(manifest_url)
+    manifest_file = settings.addons.cluster_autoscaler.manifest_file
+    raw_manifest = if !manifest_file.empty?
+      path = Path[manifest_file].expand(home: true).to_s
+      unless File.exists?(path) && !File.directory?(path)
+        log_line "Cluster autoscaler manifest file not found at #{path}", log_prefix: default_log_prefix
+        exit 1
+      end
+      File.read(path)
+    else
+      manifest_url = settings.addons.cluster_autoscaler.manifest_url
+      fetch_manifest(manifest_url)
+    end
 
     resources = YAML.parse_all(raw_manifest)
     patched_resources = patch_resources(resources)
