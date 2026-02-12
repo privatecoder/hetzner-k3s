@@ -32,7 +32,8 @@ class Kubernetes::Software::SystemUpgradeController
 
   private def create_crd : Nil
     crd_url = settings.addons.system_upgrade_controller.crd_manifest_url
-    apply_manifest_from_url(crd_url, "Failed to apply System Upgrade Controller CRD")
+    command = "kubectl apply --server-side --field-manager=hetzner-k3s -f #{crd_url}"
+    apply_kubectl_command(command, "Failed to apply System Upgrade Controller CRD")
   end
 
   private def create_resources : Nil
