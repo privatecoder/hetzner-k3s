@@ -9,6 +9,8 @@ class Kubernetes::Software::SystemUpgradeController
   include Util
   include Kubernetes::Util
 
+  PLAN_CRD_NAME = "plans.upgrade.cattle.io"
+
   private getter configuration : Configuration::Loader
   private getter settings : Configuration::Main { configuration.settings }
 
@@ -31,9 +33,26 @@ class Kubernetes::Software::SystemUpgradeController
   end
 
   private def create_crd : Nil
+    if crd_exists?(PLAN_CRD_NAME)
+      log_line "CRD #{PLAN_CRD_NAME} already exists; skipping CRD apply to avoid ownership conflicts", log_prefix: default_log_prefix
+      return
+    end
+
     crd_url = settings.addons.system_upgrade_controller.crd_manifest_url
     command = "kubectl apply --server-side --field-manager=hetzner-k3s -f #{crd_url}"
     apply_kubectl_command(command, "Failed to apply System Upgrade Controller CRD")
+  end
+
+  private def crd_exists?(crd_name : String) : Bool
+    command = "kubectl get crd #{crd_name} >/dev/null 2>&1"
+    result = run_shell_command(
+      command,
+      configuration.kubeconfig_path,
+      settings.hetzner_token,
+      abort_on_error: false,
+      print_output: false
+    )
+    result.success?
   end
 
   private def create_resources : Nil
