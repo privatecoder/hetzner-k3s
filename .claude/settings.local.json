@@ -3,7 +3,9 @@
     "allow": [
       "Bash(crystal tool format:*)",
       "Bash(grep:*)",
-      "Bash(crystal build:*)"
+      "Bash(crystal build:*)",
+      "Bash(curl:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

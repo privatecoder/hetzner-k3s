@@ -28,8 +28,22 @@ class Kubernetes::Software::SystemUpgradeController
   end
 
   private def create_namespace : Nil
-    command = "kubectl create ns system-upgrade --dry-run=client -o yaml | kubectl apply -f -"
+    return if namespace_exists?("system-upgrade")
+
+    command = "kubectl create ns system-upgrade"
     apply_kubectl_command(command, "Failed to create system-upgrade namespace")
+  end
+
+  private def namespace_exists?(name : String) : Bool
+    command = "kubectl get ns #{name} >/dev/null 2>&1"
+    result = run_shell_command(
+      command,
+      configuration.kubeconfig_path,
+      settings.hetzner_token,
+      abort_on_error: false,
+      print_output: false
+    )
+    result.success?
   end
 
   private def create_crd : Nil
@@ -67,7 +81,7 @@ class Kubernetes::Software::SystemUpgradeController
   end
 
   private def patch_deployment_manifest(manifest : String) : String
-    resources = YAML.parse_all(manifest)
+    resources = YAML.parse_all(manifest).reject { |r| r["kind"].as_s == "Namespace" }
     patched_resources = apply_tolerations_to_deployments(resources)
     patched_resources.map(&.to_yaml).join("---\n")
   end
