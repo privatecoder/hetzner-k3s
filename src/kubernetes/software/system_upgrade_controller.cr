@@ -9,6 +9,8 @@ class Kubernetes::Software::SystemUpgradeController
   include Util
   include Kubernetes::Util
 
+  PLAN_CRD_NAME = "plans.upgrade.cattle.io"
+
   private getter configuration : Configuration::Loader
   private getter settings : Configuration::Main { configuration.settings }
 
@@ -26,13 +28,45 @@ class Kubernetes::Software::SystemUpgradeController
   end
 
   private def create_namespace : Nil
-    command = "kubectl create ns system-upgrade --dry-run=client -o yaml | kubectl apply -f -"
+    return if namespace_exists?("system-upgrade")
+
+    command = "kubectl create ns system-upgrade"
     apply_kubectl_command(command, "Failed to create system-upgrade namespace")
   end
 
+  private def namespace_exists?(name : String) : Bool
+    command = "kubectl get ns #{name} >/dev/null 2>&1"
+    result = run_shell_command(
+      command,
+      configuration.kubeconfig_path,
+      settings.hetzner_token,
+      abort_on_error: false,
+      print_output: false
+    )
+    result.success?
+  end
+
   private def create_crd : Nil
+    if crd_exists?(PLAN_CRD_NAME)
+      log_line "CRD #{PLAN_CRD_NAME} already exists; skipping to avoid ownership conflicts", log_prefix: default_log_prefix
+      return
+    end
+
     crd_url = settings.addons.system_upgrade_controller.crd_manifest_url
-    apply_manifest_from_url(crd_url, "Failed to apply System Upgrade Controller CRD")
+    command = "kubectl apply --server-side --field-manager=hetzner-k3s -f #{crd_url}"
+    apply_kubectl_command(command, "Failed to apply System Upgrade Controller CRD")
+  end
+
+  private def crd_exists?(crd_name : String) : Bool
+    command = "kubectl get crd #{crd_name} >/dev/null 2>&1"
+    result = run_shell_command(
+      command,
+      configuration.kubeconfig_path,
+      settings.hetzner_token,
+      abort_on_error: false,
+      print_output: false
+    )
+    result.success?
   end
 
   private def create_resources : Nil
@@ -47,7 +81,7 @@ class Kubernetes::Software::SystemUpgradeController
   end
 
   private def patch_deployment_manifest(manifest : String) : String
-    resources = YAML.parse_all(manifest)
+    resources = YAML.parse_all(manifest).reject { |r| r["kind"].as_s == "Namespace" }
     patched_resources = apply_tolerations_to_deployments(resources)
     patched_resources.map(&.to_yaml).join("---\n")
   end
